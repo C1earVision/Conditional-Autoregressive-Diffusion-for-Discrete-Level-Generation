@@ -88,8 +88,7 @@ class DiffusionUNet(nn.Module):
         self.null_diff_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
         self.null_context_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
         
-        # Learnable scale for difficulty embedding to strengthen its influence
-        self.diff_scale = nn.Parameter(torch.ones(1) * 2.0)
+        self.diff_scale = nn.Parameter(torch.ones(1) * 10.0)
         
         self.output_scale = nn.Parameter(torch.ones(1))
 
