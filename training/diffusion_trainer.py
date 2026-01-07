@@ -68,10 +68,10 @@ class DiffusionTrainer:
             if isinstance(val, torch.Tensor):
                 setattr(self.schedule, name, val.to(device))
 
-        self.optimizer = optim.AdamW(self.unet.parameters(), lr=learning_rate, weight_decay=1e-4)
+        self.optimizer = optim.AdamW(self.unet.parameters(), lr=learning_rate, weight_decay=diffusion_config.weight_decay)
         self.criterion = nn.MSELoss()
         
-        self.ema = EMA(self.unet, decay=0.9999)
+        self.ema = EMA(self.unet, decay=diffusion_config.ema_decay)
 
         self.train_losses = []
         self.val_losses = []
@@ -188,7 +188,7 @@ class DiffusionTrainer:
         )
 
         best_val_loss = float('inf')
-        patience = 50
+        patience = diffusion_config.patience
         patience_counter = 0
 
         for epoch in range(num_epochs):

@@ -59,7 +59,7 @@ level_ids = [level_name_to_id[name] for name in level_names]
 print(f'Unique levels: {len(unique_levels)}')
 print(f'Total patches: {len(level_ids)}')
 
-dataset = AutoregressivePatchDatasetCreator(latents, difficulties, num_prev=1, level_ids=level_ids)
+dataset = AutoregressivePatchDatasetCreator(latents, difficulties, num_prev=diff_train_config.num_prev, level_ids=level_ids)
 
 import random
 random.seed(42)

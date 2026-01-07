@@ -4,6 +4,7 @@ generation:
   num_levels: 1
   patches_per_level: 1
   temperature: 0.9
+  num_prev: 1
 models:
   autoencoder_path: checkpoints/autoencoder.pth
   diffusion_path: checkpoints/diffusion_best_ema.pth

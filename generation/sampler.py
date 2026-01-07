@@ -132,6 +132,7 @@ class Sampler:
         difficulty_target: float = 0.5,
         temperature: float = 0.9,
         guidance_scale: float = 3.0,
+        num_prev: int = 1,
         show_progress: bool = True,
         seed_latent: Optional[torch.Tensor] = None,
         seed_difficulty: Optional[float] = None,
@@ -175,8 +176,9 @@ class Sampler:
                 prev_lat = None
                 prev_diff = None
             else:
-                prev_lat = torch.stack(prev_buffer[-1:], dim=0).to(self.device)
-                prev_diff = prev_diff_buffer[-1:]
+                # Use the most recent num_prev patches as context
+                prev_lat = torch.stack(prev_buffer[-num_prev:], dim=0).to(self.device)
+                prev_diff = prev_diff_buffer[-num_prev:]
 
             latent = self.sample_single_patch(
                 normalizer=normalizer,

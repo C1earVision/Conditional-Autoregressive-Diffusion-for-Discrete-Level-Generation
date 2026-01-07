@@ -53,6 +53,7 @@ num_levels = args.num_levels if args.num_levels is not None else config['generat
 difficulty_target = args.difficulty if args.difficulty is not None else config['generation']['difficulty_target']
 temperature = args.temperature if args.temperature is not None else config['generation']['temperature']
 guidance_scale = args.guidance if args.guidance is not None else config['generation']['guidance_scale']
+num_prev = config['generation'].get('num_prev', 1)
 
 autoencoder_path = config['models']['autoencoder_path']
 diffusion_path = config['models']['diffusion_path']
@@ -151,6 +152,7 @@ for level_idx in range(num_levels):
         difficulty_target=difficulty_target,
         temperature=temperature,
         guidance_scale=guidance_scale,
+        num_prev=num_prev,
         show_progress=True,
         seed_latent=None,
         seed_difficulty=None,
