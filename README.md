@@ -37,13 +37,15 @@ The system uses **Classifier-Free Guidance (CFG)** to enable control over the di
 │   ├── sampler.py           # Diffusion sampling with CFG
 │   └── stitcher.py          # Patch-to-level assembly
 ├── evaluation/              # Evaluation metrics
-│   └── patch_evaluation.py  # Difficulty scoring
+│   ├── difficulty_evaluator.py         # Difficulty scoring
+│   └── model_performance_evaluator.py  # CFG diagnostic & difficulty comparison
 ├── scripts/                 # Runnable scripts
 │   ├── prepare_data.py      # Data preprocessing
 │   ├── train_autoencoder.py # Autoencoder training
 │   ├── prepare_latents.py   # Encode patches to latents
 │   ├── train_diffusion.py   # Diffusion model training
-│   └── generate_levels.py   # Level generation
+│   ├── generate_levels.py   # Level generation
+│   └── evaluate_model_performance.py  # Model evaluation
 ├── checkpoints/             # Saved model weights
 ├── output/                  # Generated outputs
 └── dataset/                 # Raw level data
@@ -135,7 +137,37 @@ python -m scripts.generate_levels --difficulty 0.8 --temperature 0.5 --guidance 
 
 Generated levels are saved to `output/generated_levels/`.
 
-### Step 6: Interactive Demo (Desktop App)
+### Step 6: Evaluate Model Performance
+
+Evaluate the quality of the trained diffusion model:
+
+```bash
+python -m scripts.evaluate_model_performance
+```
+
+This runs two evaluation tests:
+
+1. **CFG Diagnostic Test**: Tests the Classifier-Free Guidance signal strength at the model level by comparing conditional vs unconditional noise predictions across different timesteps and difficulty values. Diagnoses whether CFG is working properly.
+
+2. **Difficulty Evaluation**: Generates patches for various target difficulties and measures how well the actual generated difficulty matches the target. Reports Mean Absolute Error (MAE) and correlation coefficient.
+
+Configuration options in `config/eval_config.yaml`:
+
+```yaml
+evaluation:
+  difficulties_to_test: [0.0, 0.25, 0.5, 0.75, 1.0]  # For CFG test
+  timesteps_to_test: [499, 400, 300, 200, 100, 50, 0]
+  guidance_scales: [0.0, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0]
+  target_difficulties: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]  # For difficulty eval
+  num_samples_per_target: 5
+  guidance_scale: 3.0
+```
+
+Results are saved to:
+- `output/visualizations/cfg_diagnostic.txt` — CFG signal strength analysis
+- `output/visualizations/difficulty_evaluation.png` — Difficulty comparison plots
+
+### Step 7: Interactive Demo (Desktop App)
 
 For an interactive experience, use the desktop GUI application:
 
