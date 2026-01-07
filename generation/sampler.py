@@ -151,22 +151,19 @@ class Sampler:
         if isinstance(difficulty_target, (list, tuple)):
             difficulty_schedule = [float(p) for p in difficulty_target]
         else:
-
+            import math
             scalar_target = float(difficulty_target)
             scalar_target = max(0.0, min(1.0, scalar_target))
             if num_patches == 1:
                 difficulty_schedule = [scalar_target]
             else:
-                # Bell curve: 0 → peak at middle → 0
-                # Using sine wave from 0 to pi for smooth curve
-                import math
                 difficulty_schedule = []
                 for i in range(num_patches):
-                    # Map patch index to [0, pi] for sine curve
-                    t = i / (num_patches - 1)  # 0 to 1
-                    curve_value = math.sin(t * math.pi)  # 0 → 1 → 0
+                    t = i / (num_patches - 1)
+                    curve_value = math.sin(t * math.pi)
                     difficulty_schedule.append(curve_value * scalar_target)
-                print(f"  Difficulty curve (bell): {difficulty_schedule[0]:.2f} → {max(difficulty_schedule):.2f} → {difficulty_schedule[-1]:.2f}")
+        
+        print(f"  Difficulty schedule: {[f'{d:.2f}' for d in difficulty_schedule]}")
 
 
         iterator = range(num_patches)
@@ -178,8 +175,8 @@ class Sampler:
                 prev_lat = None
                 prev_diff = None
             else:
-                prev_lat = torch.stack(prev_buffer, dim=0).to(self.device)
-                prev_diff = prev_diff_buffer.copy()
+                prev_lat = torch.stack(prev_buffer[-1:], dim=0).to(self.device)
+                prev_diff = prev_diff_buffer[-1:]
 
             latent = self.sample_single_patch(
                 normalizer=normalizer,

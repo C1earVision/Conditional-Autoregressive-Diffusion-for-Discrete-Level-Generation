@@ -17,6 +17,8 @@ from config.model_config import (
 
 import sys
 import io
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
@@ -211,12 +213,12 @@ print(f"✓ GENERATION COMPLETE! Generated {len(generated_levels)} levels")
 print(f"{'='*70}")
 print(f"Saving levels to output/generated_levels/")
 
-# from mario_gpt import MarioDataset, MarioLM
-# from mario_gpt.utils import view_level, convert_level_to_png, join_list_of_list, characterize
+from mario_gpt import MarioDataset, MarioLM
+from mario_gpt.utils import view_level, convert_level_to_png, join_list_of_list, characterize
 
-# mario_lm = MarioLM()
-# for i in range(len(generated_levels)):
-#     _map = generated_levels[i].split("\n")
-#     _map_png = convert_level_to_png(_map,  mario_lm.tokenizer)[0]
-#     _map_png.save(f'output/generated_levels/level_{i+1}.png')
-#     print(f'✓ Saved level {i+1} to output/generated_levels/level_{i+1}.png')
+mario_lm = MarioLM()
+for i in range(len(generated_levels)):
+    _map = generated_levels[i].split("\n")
+    _map_png = convert_level_to_png(_map,  mario_lm.tokenizer)[0]
+    _map_png.save(f'output/generated_levels/level_{i+1}.png')
+    print(f'✓ Saved level {i+1} to output/generated_levels/level_{i+1}.png')
