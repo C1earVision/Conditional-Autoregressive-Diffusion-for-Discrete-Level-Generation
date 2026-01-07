@@ -54,7 +54,6 @@ with torch.no_grad():
     for t in timesteps_to_test:
         t_batch = torch.tensor([t], device=device, dtype=torch.long)
         
-        # Unconditional prediction
         noise_uncond = unet(
             x=x,
             timesteps=t_batch,
@@ -86,7 +85,6 @@ with torch.no_grad():
                 'pct_diff': (diff_norm / cond_norm * 100) if cond_norm > 0 else 0
             })
 
-# Print results
 print(f"\n{'Timestep':<10} {'Uncond':<10} {'Diff=0.0':<12} {'Diff=0.5':<12} {'Diff=1.0':<12}")
 print("-"*60)
 
@@ -103,7 +101,6 @@ print(f"\n{'='*70}")
 print("TEST 2: Different Difficulties Produce Different Outputs?")
 print(f"{'='*70}")
 
-# Test if different difficulties produce different noise predictions
 t_test = 250
 t_batch = torch.tensor([t_test], device=device, dtype=torch.long)
 

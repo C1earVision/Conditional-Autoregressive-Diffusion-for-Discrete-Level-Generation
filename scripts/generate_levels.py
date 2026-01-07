@@ -112,7 +112,7 @@ except Exception as e:
 
 unet.to(device)
 unet.eval()
-print("✓ Autoregressive Diffusion U-Net loaded")
+print("Diffusion U-Net loaded")
 
 schedule = NoiseSchedule(
     num_timesteps=schedule_config.num_timesteps,
@@ -128,7 +128,7 @@ sampler = Sampler(
     schedule,
     device=device
 )
-print("✓ Autoregressive sampler initialized")
+print("Sampler initialized")
 
 stitcher = PatchStitcher(patch_height=14, patch_width=16, stride=4)
 generated_levels = []
@@ -139,7 +139,7 @@ for level_idx in range(num_levels):
     print(f"Generating Level {level_idx + 1}/{num_levels}")
     print(f"{'='*70}")
 
-    print(f"Generating {patches_per_level} patches sequentially (autoregressive)...")
+    print(f"Generating {patches_per_level} patches")
     for attr in ['scale','mean','target_norm','original_norm','scale_factor']:
         if hasattr(normalizer, attr):
             print(attr, getattr(normalizer, attr))
