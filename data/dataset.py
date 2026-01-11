@@ -1,7 +1,25 @@
 import torch
 import numpy as np
 from torch.utils.data import Dataset
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
+
+
+def compute_difficulty_weights(difficulties: List[float], num_bins: int = 10) -> torch.Tensor:
+    difficulties = np.array(difficulties)
+    
+    bin_edges = np.linspace(0, 1 + 1e-6, num_bins + 1)
+    bin_indices = np.digitize(difficulties, bin_edges) - 1
+    bin_indices = np.clip(bin_indices, 0, num_bins - 1)
+    
+    bin_counts = np.bincount(bin_indices, minlength=num_bins).astype(float)
+    bin_counts = np.maximum(bin_counts, 1)
+    
+    bin_weights = 1.0 / bin_counts
+    bin_weights = bin_weights / bin_weights.sum() * num_bins
+    
+    sample_weights = bin_weights[bin_indices]
+    
+    return torch.from_numpy(sample_weights).float()
 
 
 class PatchDatasetCreator(Dataset):

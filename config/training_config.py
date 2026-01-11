@@ -13,7 +13,7 @@ class AutoencoderTrainingConfig:
 @dataclass
 class DiffusionTrainingConfig:
     batch_size: int = 16
-    num_epochs: int = 600
+    num_epochs: int = 800
     learning_rate: float = 5e-4
     weight_decay: float = 1e-4
     ema_decay: float = 0.9999

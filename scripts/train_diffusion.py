@@ -1,10 +1,10 @@
 import torch
 import pickle as pkl
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 from models.autoencoder import Autoencoder
 from models.diffusion import DiffusionUNet
 from training.diffusion_trainer import DiffusionTrainer
-from data.dataset import AutoregressivePatchDatasetCreator
+from data.dataset import AutoregressivePatchDatasetCreator, compute_difficulty_weights
 from models.noise_scheduler import NoiseSchedule, ForwardDiffusion
 from config.model_config import (
     AutoencoderConfig,
@@ -76,7 +76,17 @@ from torch.utils.data import Subset
 train_dataset = Subset(dataset, train_indices)
 val_dataset = Subset(dataset, val_indices)
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+train_difficulties = [difficulties[i] for i in train_indices]
+sample_weights = compute_difficulty_weights(train_difficulties, num_bins=10)
+train_sampler = WeightedRandomSampler(
+    weights=sample_weights,
+    num_samples=len(train_dataset),
+    replacement=True
+)
+
+print(f"\n✓ Weighted sampling enabled to balance difficulty distribution")
+
+train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 batch = next(iter(train_loader))
 latents_check = batch[0]
