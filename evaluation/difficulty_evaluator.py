@@ -13,7 +13,8 @@ class PatchDifficultyEvaluator:
         self.ENEMY = parser.tile_to_idx['E']
         self.PIPE_LEFT = parser.tile_to_idx['[']
         self.PIPE_RIGHT = parser.tile_to_idx[']']
-        self.QUESTION = parser.tile_to_idx['Q']
+        self.QUESTION_FULL = parser.tile_to_idx['?']  # Full question block (obstacle)
+        self.QUESTION_EMPTY = parser.tile_to_idx['Q']  # Empty question block
         self.BRICK_LEFT = parser.tile_to_idx['<']
         self.BRICK_RIGHT = parser.tile_to_idx['>']
         self.CANNON_BOTTOM = parser.tile_to_idx['b']
@@ -74,60 +75,17 @@ class PatchDifficultyEvaluator:
 
         return int(jumps)
 
-    def _count_elevated_platforms(self, patch):
-            height, width = patch.shape
-            platforms = 0
-
-            PLATFORM_TILES = {self.GROUND, self.BREAKABLE, self.QUESTION}
-
-            for row in range(height - 1):
-                in_platform = False
-                platform_start = -1
-
-                for col in range(width):
-                    if patch[row, col] in PLATFORM_TILES:
-                        if not in_platform:
-                            in_platform = True
-                            platform_start = col
-                    else:
-                        if in_platform:
-                            is_floating = False
-                            for c in range(platform_start, col):
-                                for r in range(row + 1, height):
-                                    if patch[r, c] == self.EMPTY:
-                                        is_floating = True
-                                        break
-                                if is_floating:
-                                    break
-
-                            if is_floating:
-                                platforms += 1
-
-                            in_platform = False
-
-                if in_platform:
-                    is_floating = False
-                    for c in range(platform_start, width):
-                        for r in range(row + 1, height):
-                            if patch[r, c] == self.EMPTY:
-                                is_floating = True
-                                break
-                        if is_floating:
-                            break
-
-                    if is_floating:
-                        platforms += 1
-
-            return platforms
 
     def _count_obstacles(self, patch):
-        """Count obstacle groups (pipes, blocks, cannons as simple count)"""
+        """Count obstacle groups + floating platforms (ground not on bottom)"""
         height, width = patch.shape
         
         OBSTACLE_TILES = {
             self.PIPE_LEFT, self.PIPE_RIGHT,
+            self.BRICK_LEFT, self.BRICK_RIGHT,  
             self.CANNON_BOTTOM, self.CANNON_TOP,
-            self.QUESTION, self.BREAKABLE
+            self.QUESTION_FULL, self.QUESTION_EMPTY,
+            self.BREAKABLE
         }
         
         visited = set()
@@ -136,11 +94,32 @@ class PatchDifficultyEvaluator:
         for row in range(height):
             for col in range(width):
                 if patch[row, col] in OBSTACLE_TILES and (row, col) not in visited:
-                    # Found new obstacle group, count it as 1
                     obstacle_count += 1
-                    
-                    # Mark all connected tiles as visited (flood fill)
                     self._mark_connected(patch, row, col, OBSTACLE_TILES, visited)
+        
+        # Count floating ground platforms (not connected to bottom row)
+        ground_visited = set()
+        for row in range(height - 1):  # Exclude bottom row from starting points
+            for col in range(width):
+                if patch[row, col] == self.GROUND and (row, col) not in ground_visited:
+                    # Flood fill to find all connected ground tiles
+                    group = []
+                    stack = [(row, col)]
+                    while stack:
+                        r, c = stack.pop()
+                        if (r, c) in ground_visited:
+                            continue
+                        if r < 0 or r >= height or c < 0 or c >= width:
+                            continue
+                        if patch[r, c] != self.GROUND:
+                            continue
+                        ground_visited.add((r, c))
+                        group.append((r, c))
+                        stack.extend([(r+1, c), (r-1, c), (r, c+1), (r, c-1)])
+                    
+                    # If no tile in group is on bottom row, it's a floating platform
+                    if group and not any(r == height - 1 for r, c in group):
+                        obstacle_count += 1
         
         return obstacle_count
 
@@ -173,7 +152,6 @@ class PatchDifficultyEvaluator:
         cannons = self._count_cannons(patch)
         pipes = self._count_pipes(patch)
         jumps = gaps
-        platforms = self._count_elevated_platforms(patch)
 
         raw_score = (
             enemies * 3.0 +
@@ -182,7 +160,7 @@ class PatchDifficultyEvaluator:
         )
         
         MAX_RAW_SCORE = 15.0  
-        diff_score = min(raw_score / MAX_RAW_SCORE, 1.0)
+        diff_score = round(min(raw_score / MAX_RAW_SCORE, 1.0), 1)
 
 
         result = {
@@ -194,11 +172,10 @@ class PatchDifficultyEvaluator:
                 "cannons": cannons,
                 "pipes": pipes,
                 "jumps": jumps,
-                "platforms": platforms,
                 "total_tiles": total_tiles
             },
             "scores": {
-                "difficulty_score": round(diff_score, 3),
+                "difficulty_score": diff_score,
             },
         }
 
