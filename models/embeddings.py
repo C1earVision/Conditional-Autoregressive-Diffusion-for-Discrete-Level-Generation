@@ -19,17 +19,23 @@ class SinusoidalPositionalEmbedding(nn.Module):
 
 
 class FourierDifficultyEmbedding(nn.Module):
+    """Linear MLP embedding for difficulty (replaces Fourier approach).
+    
+    Uses a deeper network to learn representations for intermediate values
+    without the potential compression issues of Fourier features.
+    """
     def __init__(self, embedding_dim: int, num_frequencies: int = 64):
         super().__init__()
         self.embedding_dim = embedding_dim
-        self.num_frequencies = num_frequencies
-
-        frequencies = torch.exp(torch.linspace(-4.0, 4.0, num_frequencies))
-        self.register_buffer('frequencies', frequencies)
-
-        fourier_dim = num_frequencies * 2
+        
+        # Deeper MLP for better intermediate value representation
+        hidden_dim = embedding_dim * 2
         self.projection = nn.Sequential(
-            nn.Linear(fourier_dim + 1, embedding_dim),
+            nn.Linear(1, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, embedding_dim),
             nn.SiLU(),
             nn.Linear(embedding_dim, embedding_dim)
         )
@@ -37,14 +43,8 @@ class FourierDifficultyEmbedding(nn.Module):
     def forward(self, difficulty: torch.Tensor) -> torch.Tensor:
         if difficulty.dim() == 1:
             difficulty = difficulty.unsqueeze(-1)
-
+        
+        # Scale to [-1, 1] range for better gradient flow
         scaled = difficulty * 2 - 1
-
-        angles = scaled * self.frequencies.unsqueeze(0) * math.pi
-        fourier_features = torch.cat([
-            torch.sin(angles),
-            torch.cos(angles),
-            difficulty
-        ], dim=-1)
-
-        return self.projection(fourier_features)
+        
+        return self.projection(scaled)

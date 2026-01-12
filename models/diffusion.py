@@ -4,7 +4,7 @@ from typing import Optional
 from .embeddings import FourierDifficultyEmbedding, SinusoidalPositionalEmbedding
 
 class ResidualBlock(nn.Module):
-    def __init__(self, dim: int, time_emb_dim: int, dropout: float = 0.1):
+    def __init__(self, dim: int, time_emb_dim: int, dropout: float = 0.0):
         super().__init__()
         self.time_mlp = nn.Sequential(nn.Linear(time_emb_dim, dim), nn.SiLU())
         self.block = nn.Sequential(
@@ -25,7 +25,7 @@ class ResidualBlock(nn.Module):
 
 
 class MixingMLP(nn.Module):
-    def __init__(self, dim: int, hidden_scale: float = 1.0, dropout: float = 0.1):
+    def __init__(self, dim: int, hidden_scale: float = 1.0, dropout: float = 0.0):
         super().__init__()
         mid = int(dim * hidden_scale)
         mid = max(mid, dim)
@@ -83,7 +83,7 @@ class DiffusionUNet(nn.Module):
 
         self.difficulty_embedding = FourierDifficultyEmbedding(
             embedding_dim=time_emb_dim,
-            num_frequencies=128
+            num_frequencies=64
         )
         self.null_diff_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
         self.null_context_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)

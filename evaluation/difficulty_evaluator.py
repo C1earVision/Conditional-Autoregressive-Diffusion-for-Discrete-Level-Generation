@@ -120,56 +120,82 @@ class PatchDifficultyEvaluator:
 
             return platforms
 
+    def _count_obstacles(self, patch):
+        """Count obstacle groups (pipes, blocks, cannons as simple count)"""
+        height, width = patch.shape
+        
+        OBSTACLE_TILES = {
+            self.PIPE_LEFT, self.PIPE_RIGHT,
+            self.CANNON_BOTTOM, self.CANNON_TOP,
+            self.QUESTION, self.BREAKABLE
+        }
+        
+        visited = set()
+        obstacle_count = 0
+        
+        for row in range(height):
+            for col in range(width):
+                if patch[row, col] in OBSTACLE_TILES and (row, col) not in visited:
+                    # Found new obstacle group, count it as 1
+                    obstacle_count += 1
+                    
+                    # Mark all connected tiles as visited (flood fill)
+                    self._mark_connected(patch, row, col, OBSTACLE_TILES, visited)
+        
+        return obstacle_count
+
+    def _mark_connected(self, patch, row, col, obstacle_tiles, visited):
+        """Mark all horizontally/vertically connected obstacle tiles"""
+        if (row, col) in visited:
+            return
+        if row < 0 or row >= patch.shape[0] or col < 0 or col >= patch.shape[1]:
+            return
+        if patch[row, col] not in obstacle_tiles:
+            return
+        
+        visited.add((row, col))
+        
+        # Check 4 adjacent tiles
+        self._mark_connected(patch, row+1, col, obstacle_tiles, visited)
+        self._mark_connected(patch, row-1, col, obstacle_tiles, visited)
+        self._mark_connected(patch, row, col+1, obstacle_tiles, visited)
+        self._mark_connected(patch, row, col-1, obstacle_tiles, visited)
+
 
     def evaluate_patch(self, patch, metadata=None):
         height, width = patch.shape
         total_tiles = height * width
 
         enemies = self._count_enemies(patch)
+        gaps = self._count_jumps(patch)  
+        obstacles = self._count_obstacles(patch)  
+        
         cannons = self._count_cannons(patch)
         pipes = self._count_pipes(patch)
-        jumps = self._count_jumps(patch)
+        jumps = gaps
         platforms = self._count_elevated_platforms(patch)
 
-        enemy_density = enemies / width
-        cannon_density = cannons / width
-        pipe_density = pipes / width
-        jump_density = jumps / width
-        platform_density = platforms / width
-
-        enemy_term = min(enemy_density / self.MAX_ENEMY_DENSITY, 1.0)
-        cannon_term = min(cannon_density / self.MAX_CANNON_DENSITY, 1.0)
-        jump_term = min(jump_density / self.MAX_JUMP_DENSITY, 1.0)
-        pipe_term = min(pipe_density / self.MAX_PIPE_DENSITY, 1.0)
-        platform_term = min(platform_density / self.MAX_PLATFORM_DENSITY, 1.0)
-
-        raw_diff = (
-            0.60 * enemy_term +
-            0.30 * cannon_term +
-            0.20 * jump_term +
-            0.30 * platform_term +
-            0.20 * pipe_term
+        raw_score = (
+            enemies * 3.0 +
+            gaps * 5.0 +
+            obstacles * 1.5
         )
-
-        diff_score = min(raw_diff , 1.0)
+        
+        MAX_RAW_SCORE = 15.0  
+        diff_score = min(raw_score / MAX_RAW_SCORE, 1.0)
 
 
         result = {
             "metadata": metadata,
             "counts": {
                 "enemies": enemies,
+                "gaps": gaps,
+                "obstacles": obstacles,
                 "cannons": cannons,
                 "pipes": pipes,
                 "jumps": jumps,
                 "platforms": platforms,
                 "total_tiles": total_tiles
-            },
-            "densities": {
-                "enemy_density": round(enemy_density, 3),
-                "cannon_density": round(cannon_density, 3),
-                "pipe_density": round(pipe_density, 3),
-                "jump_density": round(jump_density, 3),
-                "platform_density": round(platform_density, 3)
             },
             "scores": {
                 "difficulty_score": round(diff_score, 3),

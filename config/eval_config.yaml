@@ -37,7 +37,7 @@ evaluation:
     - 10.0
   
   num_samples_per_target: 5
-  guidance_scale: 3.0
+  guidance_scale: 5.0
   target_difficulties: 
     - 0.0
     - 0.2
