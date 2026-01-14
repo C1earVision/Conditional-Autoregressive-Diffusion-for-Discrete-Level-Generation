@@ -18,17 +18,11 @@ class SinusoidalPositionalEmbedding(nn.Module):
         return self.pe[timesteps]
 
 
-class FourierDifficultyEmbedding(nn.Module):
-    """Linear MLP embedding for difficulty (replaces Fourier approach).
-    
-    Uses a deeper network to learn representations for intermediate values
-    without the potential compression issues of Fourier features.
-    """
-    def __init__(self, embedding_dim: int, num_frequencies: int = 64):
+class DifficultyEmbedding(nn.Module):
+    def __init__(self, embedding_dim: int):
         super().__init__()
         self.embedding_dim = embedding_dim
         
-        # Deeper MLP for better intermediate value representation
         hidden_dim = embedding_dim * 2
         self.projection = nn.Sequential(
             nn.Linear(1, hidden_dim),
@@ -44,7 +38,6 @@ class FourierDifficultyEmbedding(nn.Module):
         if difficulty.dim() == 1:
             difficulty = difficulty.unsqueeze(-1)
         
-        # Scale to [-1, 1] range for better gradient flow
         scaled = difficulty * 2 - 1
         
         return self.projection(scaled)

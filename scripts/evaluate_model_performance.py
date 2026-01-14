@@ -70,32 +70,15 @@ parser = LevelParser()
 difficulty_evaluator = PatchDifficultyEvaluator(parser)
 performance_evaluator = ModelPerformanceEvaluator()
 
-print("✓ All components initialized")
 
 print("\n" + "="*70)
-print("TEST 1: CFG Signal Diagnostic Test")
-print("="*70)
-
-cfg_results = performance_evaluator.test_cfg_signal(
-    unet=unet,
-    latent_dim=diff_config.latent_dim,
-    difficulties_to_test=eval_config['difficulties_to_test'],
-    timesteps_to_test=eval_config['timesteps_to_test'],
-    guidance_scales=eval_config['guidance_scales'],
-    target_difficulty=eval_config['target_difficulty'],
-    device=device,
-    save_path=eval_config['cfg_comparison_path']
-)
-
-print("\n" + "="*70)
-print("TEST 2: Difficulty Evaluation Comparison")
+print("TEST 1: Difficulty Evaluation Comparison")
 print("="*70)
 
 diff_results = performance_evaluator.evaluate_difficulty_comparison(
     sampler=sampler,
     normalizer=normalizer,
     autoencoder=autoencoder,
-    parser=parser,
     difficulty_evaluator=difficulty_evaluator,
     target_difficulties=eval_config['target_difficulties'],
     num_samples_per_target=eval_config['num_samples_per_target'],
@@ -108,8 +91,6 @@ diff_results = performance_evaluator.evaluate_difficulty_comparison(
 print("\n" + "="*70)
 print("EVALUATION COMPLETE")
 print("="*70)
-print(f"\nCFG Diagnostic: {cfg_results['diagnosis']} ({cfg_results['pct_diff']:.2f}%)")
-print(f"CFG results saved to: {eval_config['cfg_comparison_path']}")
 print(f"Difficulty Evaluation plot saved to: {eval_config['difficulty_evaluation_path']}")
 print(f"\nOverall MAE: {diff_results['overall']['mae']:.4f}")
 print(f"Overall Correlation: {diff_results['overall']['correlation']:.4f}")

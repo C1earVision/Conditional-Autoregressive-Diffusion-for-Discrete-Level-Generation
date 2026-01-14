@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import Optional
-from .embeddings import FourierDifficultyEmbedding, SinusoidalPositionalEmbedding
+from .embeddings import DifficultyEmbedding, SinusoidalPositionalEmbedding
 
 class ResidualBlock(nn.Module):
     def __init__(self, dim: int, time_emb_dim: int, dropout: float = 0.0):
@@ -81,9 +81,8 @@ class DiffusionUNet(nn.Module):
             nn.Linear(self.prev_diff_emb_dim, time_emb_dim)
         )
 
-        self.difficulty_embedding = FourierDifficultyEmbedding(
+        self.difficulty_embedding = DifficultyEmbedding(
             embedding_dim=time_emb_dim,
-            num_frequencies=64
         )
         self.null_diff_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
         self.null_context_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
