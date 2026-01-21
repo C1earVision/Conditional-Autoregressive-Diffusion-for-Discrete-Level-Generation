@@ -40,10 +40,7 @@ evaluation:
   guidance_scale: 5.0
   target_difficulties: 
     - 0.0
-    - 0.2
-    - 0.4
-    - 0.6
-    - 0.8
+    - 0.5
     - 1.0
 
   cfg_comparison_path: 'output/visualizations/cfg_diagnostic.txt'

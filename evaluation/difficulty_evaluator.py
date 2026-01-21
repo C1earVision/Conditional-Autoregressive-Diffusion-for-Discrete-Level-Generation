@@ -97,12 +97,10 @@ class PatchDifficultyEvaluator:
                     obstacle_count += 1
                     self._mark_connected(patch, row, col, OBSTACLE_TILES, visited)
         
-        # Count floating ground platforms (not connected to bottom row)
         ground_visited = set()
-        for row in range(height - 1):  # Exclude bottom row from starting points
+        for row in range(height - 1): 
             for col in range(width):
                 if patch[row, col] == self.GROUND and (row, col) not in ground_visited:
-                    # Flood fill to find all connected ground tiles
                     group = []
                     stack = [(row, col)]
                     while stack:
@@ -124,7 +122,6 @@ class PatchDifficultyEvaluator:
         return obstacle_count
 
     def _mark_connected(self, patch, row, col, obstacle_tiles, visited):
-        """Mark all horizontally/vertically connected obstacle tiles"""
         if (row, col) in visited:
             return
         if row < 0 or row >= patch.shape[0] or col < 0 or col >= patch.shape[1]:
@@ -134,7 +131,6 @@ class PatchDifficultyEvaluator:
         
         visited.add((row, col))
         
-        # Check 4 adjacent tiles
         self._mark_connected(patch, row+1, col, obstacle_tiles, visited)
         self._mark_connected(patch, row-1, col, obstacle_tiles, visited)
         self._mark_connected(patch, row, col+1, obstacle_tiles, visited)
@@ -152,15 +148,13 @@ class PatchDifficultyEvaluator:
         cannons = self._count_cannons(patch)
         pipes = self._count_pipes(patch)
         jumps = gaps
-
-        raw_score = (
-            enemies * 3.0 +
-            gaps * 5.0 +
-            obstacles * 1.5
-        )
         
-        MAX_RAW_SCORE = 15.0  
-        diff_score = round(min(raw_score / MAX_RAW_SCORE, 1.0), 1)
+        if enemies >= 3:
+            diff_score = 1.0
+        elif enemies >= 1:
+            diff_score = 0.5
+        else:
+            diff_score = 0.0
 
 
         result = {

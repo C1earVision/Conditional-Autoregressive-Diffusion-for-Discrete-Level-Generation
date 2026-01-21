@@ -36,22 +36,21 @@ np.save('./output/processed/patches.npy', patches)
 with open('./output/processed/metadata.pkl', 'wb') as f:
     pickle.dump(metadata, f)
 
-# Show difficulty distribution
 scores = np.array([m['final_score'] for m in metadata])
 print("\n" + "="*60)
-print("DIFFICULTY DISTRIBUTION")
+print("DIFFICULTY DISTRIBUTION (Discrete Classes)")
 print("="*60)
-for i in range(10):
-    count = np.sum((scores >= i/10) & (scores < (i+1)/10))
-    print(f"{i/10:.1f}-{(i+1)/10:.1f}: {count:4d} ({count/len(scores)*100:5.1f}%)")
-print(f"\nMean: {scores.mean():.3f}, Std: {scores.std():.3f}, Max: {scores.max():.3f}")
+easy_count = np.sum(scores == 0.0)
+medium_count = np.sum(scores == 0.5)
+hard_count = np.sum(scores == 1.0)
+print(f"Easy   (0.0): {easy_count:4d} ({easy_count/len(scores)*100:5.1f}%)")
+print(f"Medium (0.5): {medium_count:4d} ({medium_count/len(scores)*100:5.1f}%)")
+print(f"Hard   (1.0): {hard_count:4d} ({hard_count/len(scores)*100:5.1f}%)")
 
-# Show example patches from a random level
 print("\n" + "="*60)
 print("EXAMPLE PATCHES FROM RANDOM LEVEL")
 print("="*60)
 
-# Group patches by level
 level_names = [m['level_name'] for m in metadata]
 unique_levels = list(set(level_names))
 random_level = random.choice(unique_levels)
@@ -59,7 +58,7 @@ random_level = random.choice(unique_levels)
 level_indices = [i for i, m in enumerate(metadata) if m['level_name'] == random_level]
 print(f"Level: {random_level} ({len(level_indices)} patches)\n")
 
-for idx in level_indices[:50]:  # Show first 5 patches
+for idx in level_indices[:5]: 
     patch = patches[idx]
     result = patch_evaluation_results[idx]
     

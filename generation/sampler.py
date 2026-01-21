@@ -73,9 +73,8 @@ class Sampler:
         device = self.device
         latent_dim = self.unet.latent_dim
 
-        torch.manual_seed(time.time_ns())
+        # Don't set manual seed - allow true randomness for diverse generation
         x = torch.randn(1, latent_dim, device=device) * temperature
-        # x = x / (x.norm(dim=-1, keepdim=True) + 1e-12) * normalizer.target_norm
 
         target_diff_tensor = torch.tensor([target_difficulty], device=device, dtype=torch.float32)
 

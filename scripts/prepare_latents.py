@@ -36,11 +36,11 @@ ae_checkpoint = torch.load(autoencoder_path, map_location=device)
 autoencoder.load_state_dict(ae_checkpoint['model_state_dict'])
 autoencoder.to(device)
 autoencoder.eval()
-print("✓ Autoencoder loaded")
+print("[OK] Autoencoder loaded")
 for param in autoencoder.parameters():
     param.requires_grad = False
 
-print("✓ Autoencoder loaded!")
+print("[OK] Autoencoder loaded!")
 
 print(f"Loaded {len(patches)} patches")
 print("num_scores:", len(difficulties))
