@@ -1,9 +1,3 @@
-"""
-Script to evaluate difficulty conditioning of the diffusion model.
-Uses the evaluate_difficulty_comparison method to generate patches at various
-target difficulties and compare with actual evaluated difficulties.
-"""
-
 import torch
 import yaml
 from models.autoencoder import Autoencoder

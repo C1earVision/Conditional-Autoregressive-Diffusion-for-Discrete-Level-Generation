@@ -149,7 +149,7 @@ class PatchDifficultyEvaluator:
         pipes = self._count_pipes(patch)
         jumps = gaps
         
-        if enemies >= 3:
+        if enemies >= 4:
             diff_score = 1.0
         elif enemies >= 1:
             diff_score = 0.5

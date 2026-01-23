@@ -23,8 +23,7 @@ def count_enemies(patch):
     return np.sum(patch == ENEMY)
 
 def get_difficulty_class(enemies):
-    """Current metric: Easy=0, Medium=1-2, Hard=3+"""
-    if enemies >= 3:
+    if enemies >= 4:
         return 'hard'
     elif enemies >= 1:
         return 'medium'
