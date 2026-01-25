@@ -73,7 +73,6 @@ class Sampler:
         device = self.device
         latent_dim = self.unet.latent_dim
 
-        # Don't set manual seed - allow true randomness for diverse generation
         x = torch.randn(1, latent_dim, device=device) * temperature
 
         target_diff_tensor = torch.tensor([target_difficulty], device=device, dtype=torch.float32)
@@ -140,7 +139,6 @@ class Sampler:
         prev_buffer = []
         prev_diff_buffer = []
         
-        # Initialize with seed context if provided
         if seed_latent is not None:
             if seed_latent.dim() == 1:
                 seed_latent = seed_latent.unsqueeze(0)
@@ -151,17 +149,32 @@ class Sampler:
         if isinstance(difficulty_target, (list, tuple)):
             difficulty_schedule = [float(p) for p in difficulty_target]
         else:
-            import math
             scalar_target = float(difficulty_target)
-            scalar_target = max(0.0, min(1.0, scalar_target))
-            if num_patches == 1:
-                difficulty_schedule = [scalar_target]
+            if scalar_target < 0.25:
+                target_class = 0.0
+            elif scalar_target < 0.75:
+                target_class = 0.5
             else:
+                target_class = 1.0
+            
+            if num_patches == 1:
+                difficulty_schedule = [target_class]
+            else:
+                # Bell curve using only discrete values: 0.0, 0.5, 1.0
+                # Pattern: 0.0 -> 0.5 -> target -> target -> 0.5 -> 0.0
                 difficulty_schedule = []
+                mid = (num_patches - 1) / 2.0
                 for i in range(num_patches):
-                    t = i / (num_patches - 1)
-                    curve_value = math.sin(t * math.pi)
-                    difficulty_schedule.append(curve_value * scalar_target)
+                    dist = abs(i - mid) / mid if mid > 0 else 0
+                    
+                    # Map distance to discrete difficulty class
+                    if dist <= 0.25:  # Center - use target class
+                        diff = target_class
+                    elif dist <= 0.6:  # Transition - one step below target
+                        diff = max(0.0, target_class - 0.5)
+                    else:  # Edges - easy
+                        diff = 0.0
+                    difficulty_schedule.append(diff)
         
         print(f"  Difficulty schedule: {[f'{d:.2f}' for d in difficulty_schedule]}")
 
@@ -175,7 +188,6 @@ class Sampler:
                 prev_lat = None
                 prev_diff = None
             else:
-                # Use the most recent num_prev patches as context
                 prev_lat = torch.stack(prev_buffer[-num_prev:], dim=0).to(self.device)
                 prev_diff = prev_diff_buffer[-num_prev:]
 

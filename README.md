@@ -79,7 +79,29 @@ python -m scripts.prepare_data
 
 This extracts patches and computes difficulty scores, saving to `output/processed/`.
 
-### Step 2: Train Autoencoder
+### Step 2: Augment Dataset (Optional but Recommended)
+
+```bash
+python -m scripts.augment_dataset
+```
+
+This balances the difficulty distribution and enhances patch diversity:
+
+- **Platform Addition**: Adds elevated platforms to 80% of flat patches (any difficulty)
+- **Enemy Placement**: Converts easy patches to medium/hard by adding enemies with smart placement:
+  - Maximum 2 enemies per distinct platform
+  - Enemies spread across left/center/right zones
+  - Only modifies patches with existing features (obstacles, gaps, platforms)
+- **Conversion Flow**: Easy → Medium → Hard (no direct easy-to-hard)
+
+**Difficulty Classes:**
+| Class | Enemy Count | Score |
+|-------|-------------|-------|
+| Easy | 0-1 | 0.0 |
+| Medium | 2-3 | 0.5 |
+| Hard | 4-5 | 1.0 |
+
+### Step 3: Train Autoencoder
 
 ```bash
 python -m scripts.train_autoencoder
@@ -87,7 +109,7 @@ python -m scripts.train_autoencoder
 
 Trains the patch autoencoder. Checkpoint saved to `checkpoints/autoencoder.pth`.
 
-### Step 3: Prepare Latents
+### Step 4: Prepare Latents
 
 ```bash
 python -m scripts.prepare_latents
@@ -95,7 +117,7 @@ python -m scripts.prepare_latents
 
 Encodes all patches to latent space and fits the latent normalizer.
 
-### Step 4: Train Diffusion Model
+### Step 5: Train Diffusion Model
 
 ```bash
 python -m scripts.train_diffusion
@@ -103,7 +125,7 @@ python -m scripts.train_diffusion
 
 Trains the conditional diffusion model. Best checkpoint saved to `checkpoints/diffusion_best.pth`.
 
-### Step 5: Generate Levels
+### Step 6: Generate Levels
 
 Edit `config/generation_config.yaml` to set generation parameters:
 
@@ -137,7 +159,7 @@ python -m scripts.generate_levels --difficulty 0.8 --temperature 0.5 --guidance 
 
 Generated levels are saved to `output/generated_levels/`.
 
-### Step 6: Evaluate Model Performance
+### Step 7: Evaluate Model Performance
 
 Evaluate the quality of the trained diffusion model:
 
@@ -164,10 +186,9 @@ evaluation:
 ```
 
 Results are saved to:
-- `output/visualizations/cfg_diagnostic.txt` — CFG signal strength analysis
 - `output/visualizations/difficulty_evaluation.png` — Difficulty comparison plots
 
-### Step 7: Interactive Demo (Desktop App)
+### Step 8: Interactive Demo (Desktop App)
 
 For an interactive experience, use the desktop GUI application:
 
