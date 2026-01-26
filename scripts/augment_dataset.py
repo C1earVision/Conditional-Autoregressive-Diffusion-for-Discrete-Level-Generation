@@ -106,18 +106,25 @@ def get_enemy_positions_by_platform(patch):
     positions_by_platform = {i: [] for i in range(len(platforms))}
     enemies_by_platform = {i: 0 for i in range(len(platforms))}
     
+    # First: Count ALL existing enemies on each platform (full scan)
     for row in range(1, height):
-        for col in range(2, width - 2):
+        for col in range(width):
             standing_tile = (row, col)
             if standing_tile in tile_to_platform:
                 platform_id = tile_to_platform[standing_tile]
                 enemy_pos = (row - 1, col)
-                
-                # Check if position is empty or has enemy
+                if 0 <= enemy_pos[0] < height and patch[enemy_pos[0], enemy_pos[1]] == ENEMY:
+                    enemies_by_platform[platform_id] += 1
+    
+    # Second: Find valid positions for NEW enemies (with margin from edges)
+    for row in range(1, height):
+        for col in range(2, width - 2):  # Only place new enemies away from edges
+            standing_tile = (row, col)
+            if standing_tile in tile_to_platform:
+                platform_id = tile_to_platform[standing_tile]
+                enemy_pos = (row - 1, col)
                 if patch[enemy_pos[0], enemy_pos[1]] == EMPTY:
                     positions_by_platform[platform_id].append(enemy_pos)
-                elif patch[enemy_pos[0], enemy_pos[1]] == ENEMY:
-                    enemies_by_platform[platform_id] += 1
     
     return positions_by_platform, enemies_by_platform, platforms
 
@@ -351,13 +358,16 @@ def balance_dataset():
     random.shuffle(flat_patches)
     platforms_added = 0
     platform_modified_indices = []  # Track which patches got platforms
+    platform_before_after = []  # Store (idx, before_copy, after_ref) for display
     
     for idx in flat_patches[:flat_patches_to_modify]:
         patch = patches[idx]
+        before_copy = patch.copy()  # Save before state
         if add_multiple_platforms(patch):
             metadata[idx]['added_platforms'] = True
             platforms_added += 1
             platform_modified_indices.append(idx)
+            platform_before_after.append((idx, before_copy, patch))
             # Update feature tracking for easy patches
             if idx in easy_without_features:
                 easy_with_features.append(idx)
@@ -367,18 +377,21 @@ def balance_dataset():
     print(f"Added platforms to {platforms_added}/{flat_patches_to_modify} flat patches")
     print(f"Easy patches now: {len(easy_with_features)} with features, {len(easy_without_features)} flat")
     
-    # Show some patches that had platforms added
-    if platform_modified_indices:
-        print("\n--- Sample patches with added platforms ---")
-        samples = random.sample(platform_modified_indices, min(5, len(platform_modified_indices)))
-        for idx in samples:
-            patch = patches[idx]
-            enemies = count_enemies(patch)
-            print()
-            for row in range(patch.shape[0]):
-                print(''.join(parser.idx_to_tile[int(t)] for t in patch[row]))
-            print(f"(Patch {idx}: {enemies} enemies)")
-        print("--- End platform samples ---\n")
+    # Show BEFORE/AFTER for patches that had platforms added
+    if platform_before_after:
+        print("\n" + "=" * 60)
+        print("PLATFORM ADDITIONS - BEFORE/AFTER COMPARISON")
+        print("=" * 60)
+        samples = random.sample(platform_before_after, min(5, len(platform_before_after)))
+        for idx, before, after in samples:
+            enemies = count_enemies(after)
+            print(f"\n--- Patch {idx} ({enemies} enemies) ---")
+            print("BEFORE:".ljust(18) + "AFTER:")
+            for row in range(before.shape[0]):
+                before_row = ''.join(parser.idx_to_tile[int(t)] for t in before[row])
+                after_row = ''.join(parser.idx_to_tile[int(t)] for t in after[row])
+                print(f"{before_row}  |  {after_row}")
+        print("=" * 60 + "\n")
     
     print("\n" + "=" * 60)
     print("BALANCING DATASET (IN-PLACE MODIFICATION)")
@@ -408,6 +421,7 @@ def balance_dataset():
     print(f"Need {medium_needed} more medium patches")
     
     modified_count = 0
+    enemy_before_after = []  # Store (idx, before_copy, after_ref, conversion_type) for display
     
     # Convert some MEDIUM -> HARD (only patches WITH features)
     hard_from_medium = min(hard_needed, len(medium_with_features))
@@ -418,6 +432,7 @@ def balance_dataset():
     
     for idx in medium_to_convert:
         patch = patches[idx]
+        before_copy = patch.copy()  # Save before state
         enemies = count_enemies(patch)
         target_enemies = random.randint(4, 5)  # Hard: 4-5 enemies
         to_add = max(1, target_enemies - enemies)
@@ -427,6 +442,7 @@ def balance_dataset():
             metadata[idx]['added_enemies'] = to_add
             converted_to_hard += 1
             modified_count += 1
+            enemy_before_after.append((idx, before_copy, patch, "medium->hard"))
     
     print(f"Converted {converted_to_hard} medium -> hard")
     
@@ -450,6 +466,7 @@ def balance_dataset():
                 break
             
             patch = patches[idx]
+            before_copy = patch.copy()  # Save before state
             enemies = count_enemies(patch)
             to_add = random.randint(2, 3) - enemies  # Target 2-3 enemies for medium
             to_add = max(1, to_add)
@@ -461,8 +478,26 @@ def balance_dataset():
                     metadata[idx]['added_enemies'] = to_add
                     easy_to_medium += 1
                     modified_count += 1
+                    enemy_before_after.append((idx, before_copy, patch, "easy->medium"))
         
         print(f"Converted {easy_to_medium} easy -> medium")
+    
+    # Show BEFORE/AFTER for enemy additions
+    if enemy_before_after:
+        print("\n" + "=" * 60)
+        print("ENEMY ADDITIONS - BEFORE/AFTER COMPARISON")
+        print("=" * 60)
+        samples = random.sample(enemy_before_after, min(6, len(enemy_before_after)))
+        for idx, before, after, conversion_type in samples:
+            before_enemies = count_enemies(before)
+            after_enemies = count_enemies(after)
+            print(f"\n--- Patch {idx} ({conversion_type}: {before_enemies} -> {after_enemies} enemies) ---")
+            print("BEFORE:".ljust(18) + "AFTER:")
+            for row in range(before.shape[0]):
+                before_row = ''.join(parser.idx_to_tile[int(t)] for t in before[row])
+                after_row = ''.join(parser.idx_to_tile[int(t)] for t in after[row])
+                print(f"{before_row}  |  {after_row}")
+        print("=" * 60 + "\n")
     
     # Recalculate final distribution
     print("\n" + "=" * 60)
