@@ -44,9 +44,9 @@ class LevelGeneratorApp:
         self.style.configure('TScale', background='#2b2b2b')
         
 
-        self.difficulty_var = tk.DoubleVar(value=1.0)
-        self.temperature_var = tk.DoubleVar(value=0.9)
-        self.guidance_var = tk.DoubleVar(value=7.0)
+        self.difficulty_var = tk.DoubleVar(value=0.0)
+        self.temperature_var = tk.DoubleVar(value=1.0)
+        self.guidance_var = tk.DoubleVar(value=5.0)
         self.patches_var = tk.IntVar(value=1)
         
 
