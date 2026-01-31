@@ -4,9 +4,18 @@ from typing import Optional
 from .embeddings import DifficultyEmbedding, SinusoidalPositionalEmbedding
 
 class ResidualBlock(nn.Module):
-    def __init__(self, dim: int, time_emb_dim: int, dropout: float = 0.0):
+    def __init__(self, dim: int, time_emb_dim: int, dropout: float = 0.0, use_diff_injection: bool = False):
         super().__init__()
         self.time_mlp = nn.Sequential(nn.Linear(time_emb_dim, dim), nn.SiLU())
+        
+        self.use_diff_injection = use_diff_injection
+        if use_diff_injection:
+            self.diff_mlp = nn.Sequential(
+                nn.Linear(time_emb_dim, dim),
+                nn.SiLU(),
+                nn.Linear(dim, dim)
+            )
+        
         self.block = nn.Sequential(
             nn.Linear(dim, dim),
             nn.LayerNorm(dim),
@@ -18,9 +27,15 @@ class ResidualBlock(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.activation = nn.SiLU()
 
-    def forward(self, x: torch.Tensor, time_emb: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, time_emb: torch.Tensor, diff_emb: torch.Tensor = None) -> torch.Tensor:
         time_proj = self.time_mlp(time_emb)
-        h = self.block(x + time_proj)
+        h = x + time_proj
+        
+        if self.use_diff_injection and diff_emb is not None:
+            diff_proj = self.diff_mlp(diff_emb) * 3.0
+            h = h + diff_proj
+        
+        h = self.block(h)
         return self.activation(x + self.dropout(h))
 
 
@@ -87,8 +102,6 @@ class DiffusionUNet(nn.Module):
         self.null_diff_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
         self.null_context_embedding = nn.Parameter(torch.randn(time_emb_dim) * 0.02)
         
-        self.diff_scale = nn.Parameter(torch.ones(1) * 10.0)
-        
         self.output_scale = nn.Parameter(torch.ones(1))
 
         self.input_proj = nn.Linear(latent_dim * 2, hidden_dims[0])
@@ -97,14 +110,14 @@ class DiffusionUNet(nn.Module):
         self.encoder_mixes = nn.ModuleList()
         dims = [hidden_dims[0]] + hidden_dims
         for i in range(len(hidden_dims)):
-            blocks = nn.ModuleList([ResidualBlock(dims[i], time_emb_dim) for _ in range(num_res_blocks)])
+            blocks = nn.ModuleList([ResidualBlock(dims[i], time_emb_dim, use_diff_injection=True) for _ in range(num_res_blocks)])
             self.encoder_blocks.append(blocks)
             self.encoder_mixes.append(MixingMLP(dims[i], hidden_scale=1.0))
             if i < len(hidden_dims) - 1:
                 self.encoder_blocks.append(nn.ModuleList([nn.Linear(dims[i], dims[i + 1])]))
 
         bottleneck_dim = hidden_dims[-1]
-        self.bottleneck = nn.ModuleList([ResidualBlock(bottleneck_dim, time_emb_dim) for _ in range(num_res_blocks)])
+        self.bottleneck = nn.ModuleList([ResidualBlock(bottleneck_dim, time_emb_dim, use_diff_injection=True) for _ in range(num_res_blocks)])
         self.bottleneck_mix = MixingMLP(bottleneck_dim, hidden_scale=1.0)
 
         self.decoder_blocks = nn.ModuleList()
@@ -120,7 +133,7 @@ class DiffusionUNet(nn.Module):
             concat_dim = current_dim + skip_dim
             self.skip_projections.append(nn.Linear(concat_dim, current_dim))
             
-            blocks = nn.ModuleList([ResidualBlock(current_dim, time_emb_dim) for _ in range(num_res_blocks)])
+            blocks = nn.ModuleList([ResidualBlock(current_dim, time_emb_dim, use_diff_injection=True) for _ in range(num_res_blocks)])
             self.decoder_blocks.append(blocks)
             self.decoder_mixes.append(MixingMLP(current_dim, hidden_scale=1.0))
             
@@ -133,7 +146,7 @@ class DiffusionUNet(nn.Module):
         self._initialize_weights()
 
         print(f"\n{'='*70}")
-        print(f"CFGDiffusionUNet Initialized")
+        print(f"DiffusionUNet Initialized")
         print(f"{'='*70}")
         print(f"  Condition dropout: {cond_dropout*100:.0f}%")
         print(f"  Latent dim: {latent_dim}")
@@ -260,14 +273,15 @@ class DiffusionUNet(nn.Module):
         h = torch.cat([x, prev_lat_mean], dim=-1)
         h = self.input_proj(h)
 
-        combined_emb = t_emb + ctx_emb + (diff_emb * self.diff_scale)
-
+        combined_emb = t_emb + ctx_emb
+        
+        scaled_diff_emb = diff_emb
 
         skip_connections = []
         block_idx = 0
         for i in range(len(self.hidden_dims)):
             for res_block in self.encoder_blocks[block_idx]:
-                h = res_block(h, combined_emb)
+                h = res_block(h, combined_emb, scaled_diff_emb)
             block_idx += 1
             h = self.encoder_mixes[i](h)
             skip_connections.append(h)
@@ -277,7 +291,7 @@ class DiffusionUNet(nn.Module):
                 block_idx += 1
 
         for bottleneck_block in self.bottleneck:
-            h = bottleneck_block(h, combined_emb)
+            h = bottleneck_block(h, combined_emb, scaled_diff_emb)
         h = self.bottleneck_mix(h)
 
         skip_connections = list(reversed(skip_connections))
@@ -288,7 +302,7 @@ class DiffusionUNet(nn.Module):
             h = self.skip_projections[i](h)
             
             for res_block in self.decoder_blocks[decoder_block_idx]:
-                h = res_block(h, combined_emb)
+                h = res_block(h, combined_emb, scaled_diff_emb)
             decoder_block_idx += 1
             
             h = self.decoder_mixes[i](h)

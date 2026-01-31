@@ -94,3 +94,5 @@ print("="*70)
 print(f"Difficulty Evaluation plot saved to: {eval_config['difficulty_evaluation_path']}")
 print(f"\nOverall MAE: {diff_results['overall']['mae']:.4f}")
 print(f"Overall Correlation: {diff_results['overall']['correlation']:.4f}")
+print(f"Overall Accuracy: {diff_results['overall']['accuracy']:.1f}%")
+

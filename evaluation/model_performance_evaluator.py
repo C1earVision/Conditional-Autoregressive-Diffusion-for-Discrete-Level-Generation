@@ -188,18 +188,25 @@ class ModelPerformanceEvaluator:
 
         overall_mae = np.mean([results['summary'][t]['error'] for t in target_vals])
         overall_correlation = np.corrcoef(all_targets, all_actual_scores)[0, 1]
+        
+        # Calculate accuracy (exact class match)
+        correct_predictions = sum(1 for t, a in zip(all_targets, all_actual_scores) if t == a)
+        accuracy = correct_predictions / len(all_targets) * 100
 
         print(f"\n{'='*90}")
         print(f"OVERALL STATISTICS")
         print(f"{'='*90}")
         print(f"Mean Absolute Error (MAE): {overall_mae:.4f}")
         print(f"Correlation Coefficient: {overall_correlation:.4f}")
+        print(f"Accuracy (exact class match): {accuracy:.1f}% ({correct_predictions}/{len(all_targets)})")
         print(f"Total Samples Generated: {len(all_targets)}")
         print(f"{'='*90}\n")
 
         results['overall'] = {
             'mae': overall_mae,
             'correlation': overall_correlation,
+            'accuracy': accuracy,
+            'correct_predictions': correct_predictions,
             'total_samples': len(all_targets)
         }
 

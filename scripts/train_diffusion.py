@@ -1,6 +1,6 @@
 import torch
 import pickle as pkl
-from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
+from torch.utils.data import DataLoader, random_split
 from models.autoencoder import Autoencoder
 from models.diffusion import DiffusionUNet
 from training.diffusion_trainer import DiffusionTrainer
@@ -72,19 +72,18 @@ val_levels = set(unique_level_list[num_train_levels:])
 train_indices = [i for i, name in enumerate(level_names) if name in train_levels]
 val_indices = [i for i, name in enumerate(level_names) if name in val_levels]
 
-from torch.utils.data import Subset
+from torch.utils.data import Subset, WeightedRandomSampler
 train_dataset = Subset(dataset, train_indices)
 val_dataset = Subset(dataset, val_indices)
 
 train_difficulties = [difficulties[i] for i in train_indices]
-sample_weights = compute_difficulty_weights(train_difficulties, num_bins=10)
+sample_weights = compute_difficulty_weights(train_difficulties, num_bins=10, temperature=0.5)
 train_sampler = WeightedRandomSampler(
     weights=sample_weights,
     num_samples=len(train_dataset),
     replacement=True
 )
-
-print(f"\n✓ Weighted sampling enabled to balance difficulty distribution")
+print(f"\n✓ Soft weighted sampling enabled (temperature=0.5)")
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

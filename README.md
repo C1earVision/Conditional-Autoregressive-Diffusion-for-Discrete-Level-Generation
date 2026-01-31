@@ -19,11 +19,12 @@ The system uses **Classifier-Free Guidance (CFG)** to enable control over the di
 ├── config/                  # Configuration files
 │   ├── model_config.py      # Model architecture settings
 │   ├── training_config.py   # Training hyperparameters
-│   └── generation_config.yaml  # Generation settings
+│   ├── generation_config.yaml  # Generation settings
+│   └── eval_config.yaml     # Evaluation settings
 ├── data/                    # Data processing modules
 │   ├── parser.py            # Level parsing utilities
 │   ├── dataset.py           # PyTorch dataset classes
-│   └── patch_extraction.py  # Patch extraction from levels
+│   └── extractor.py         # Patch extraction from levels
 ├── models/                  # Neural network architectures
 │   ├── autoencoder.py       # Patch encoder/decoder
 │   ├── diffusion.py         # Diffusion U-Net with CFG
@@ -38,9 +39,12 @@ The system uses **Classifier-Free Guidance (CFG)** to enable control over the di
 │   └── stitcher.py          # Patch-to-level assembly
 ├── evaluation/              # Evaluation metrics
 │   ├── difficulty_evaluator.py         # Difficulty scoring
-│   └── model_performance_evaluator.py  # CFG diagnostic & difficulty comparison
+│   ├── model_performance_evaluator.py  # CFG diagnostic & difficulty comparison
+│   └── difficulty_prediction_comparison.py  # Compare predicted vs actual difficulty
 ├── scripts/                 # Runnable scripts
 │   ├── prepare_data.py      # Data preprocessing
+│   ├── augment_dataset.py   # Dataset augmentation and balancing
+│   ├── analyze_distribution.py  # Analyze difficulty distribution
 │   ├── train_autoencoder.py # Autoencoder training
 │   ├── prepare_latents.py   # Encode patches to latents
 │   ├── train_diffusion.py   # Diffusion model training
@@ -48,7 +52,10 @@ The system uses **Classifier-Free Guidance (CFG)** to enable control over the di
 │   └── evaluate_model_performance.py  # Model evaluation
 ├── checkpoints/             # Saved model weights
 ├── output/                  # Generated outputs
-└── dataset/                 # Raw level data
+├── dataset/                 # Raw level data
+├── demo.py                  # Interactive desktop GUI application
+├── setup.py                 # Package installation script
+└── requirements.txt         # Python dependencies
 ```
 
 ## Installation

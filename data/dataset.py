@@ -4,7 +4,16 @@ from torch.utils.data import Dataset
 from typing import Optional, Sequence, List
 
 
-def compute_difficulty_weights(difficulties: List[float], num_bins: int = 10) -> torch.Tensor:
+def compute_difficulty_weights(difficulties: List[float], num_bins: int = 10, temperature: float = 0.5) -> torch.Tensor:
+    """
+    Compute sample weights for balanced difficulty sampling.
+    
+    Args:
+        difficulties: List of difficulty scores
+        num_bins: Number of bins for difficulty bucketing
+        temperature: 0.0 = uniform (no weighting), 1.0 = full inverse frequency
+                    0.5 = sqrt of inverse frequency (softer balancing, default)
+    """
     difficulties = np.array(difficulties)
     
     bin_edges = np.linspace(0, 1 + 1e-6, num_bins + 1)
@@ -14,7 +23,9 @@ def compute_difficulty_weights(difficulties: List[float], num_bins: int = 10) ->
     bin_counts = np.bincount(bin_indices, minlength=num_bins).astype(float)
     bin_counts = np.maximum(bin_counts, 1)
     
-    bin_weights = 1.0 / bin_counts
+    # Soft weighting: temperature controls strength
+    # temp=0 -> uniform, temp=1 -> full inverse, temp=0.5 -> sqrt (softer)
+    bin_weights = (1.0 / bin_counts) ** temperature
     bin_weights = bin_weights / bin_weights.sum() * num_bins
     
     sample_weights = bin_weights[bin_indices]

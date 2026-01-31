@@ -13,8 +13,8 @@ class PatchDifficultyEvaluator:
         self.ENEMY = parser.tile_to_idx['E']
         self.PIPE_LEFT = parser.tile_to_idx['[']
         self.PIPE_RIGHT = parser.tile_to_idx[']']
-        self.QUESTION_FULL = parser.tile_to_idx['?']  # Full question block (obstacle)
-        self.QUESTION_EMPTY = parser.tile_to_idx['Q']  # Empty question block
+        self.QUESTION_FULL = parser.tile_to_idx['?'] 
+        self.QUESTION_EMPTY = parser.tile_to_idx['Q'] 
         self.BRICK_LEFT = parser.tile_to_idx['<']
         self.BRICK_RIGHT = parser.tile_to_idx['>']
         self.CANNON_BOTTOM = parser.tile_to_idx['b']
@@ -151,7 +151,7 @@ class PatchDifficultyEvaluator:
         
         if enemies >= 4:
             diff_score = 1.0
-        elif enemies >= 1:
+        elif enemies >= 2:
             diff_score = 0.5
         else:
             diff_score = 0.0

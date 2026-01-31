@@ -11,7 +11,7 @@ class AutoencoderConfig:
 @dataclass
 class DiffusionConfig:
     latent_dim: int = 128
-    time_emb_dim: int = 256
+    time_emb_dim: int = 512
     context_emb_dim: int = 128
     hidden_dims: list = field(default_factory=lambda: [256, 512, 512])
     num_res_blocks: int = 2

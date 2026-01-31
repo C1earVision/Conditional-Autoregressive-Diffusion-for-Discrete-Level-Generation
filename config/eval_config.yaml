@@ -1,47 +1,10 @@
 evaluation:
-  MAX_ENEMY_DENSITY: 0.15
-  MAX_CANNON_DENSITY: 0.15
-  MAX_PIPE_DENSITY: 0.15
-  MAX_JUMP_DENSITY: 0.2
-  MAX_PLATFORM_DENSITY: 0.1
-
-  ENEMY_WEIGHT: 0.60
-  CANNON_WEIGHT: 0.30
-  PIPE_WEIGHT: 0.20
-  JUMP_WEIGHT: 0.20
-  PLATFORM_WEIGHT: 0.30
-
-  difficulties_to_test:
-    - 0.0
-    - 0.25
-    - 0.5
-    - 0.75
-    - 1.0
-  timesteps_to_test:
-    - 499
-    - 400
-    - 300
-    - 200
-    - 100
-    - 50
-    - 0
-  target_difficulty: 0.8
-  temperature: 0.5
-  guidance_scales: 
-    - 0.0
-    - 1.0
-    - 2.0
-    - 3.0
-    - 5.0
-    - 7.0
-    - 10.0
-  
   num_samples_per_target: 5
+  temperature: 1.0
   guidance_scale: 5.0
   target_difficulties: 
     - 0.0
     - 0.5
     - 1.0
 
-  cfg_comparison_path: 'output/visualizations/cfg_diagnostic.txt'
   difficulty_evaluation_path: 'output/visualizations/difficulty_evaluation.png'

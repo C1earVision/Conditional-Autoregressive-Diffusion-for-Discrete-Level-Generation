@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
+
 import torch
 import argparse
 from models.autoencoder import Autoencoder
@@ -61,13 +64,6 @@ normalizer_path = config['models']['normalizer_path']
 output_dir = config['output']['directory']
 
 import pickle as pkl
-latents_all = torch.load('output/processed/latents.pt')
-with open('output/processed/metadata.pkl', 'rb') as f:
-    metadata = pkl.load(f)
-difficulties_all = [d['final_score'] for d in metadata]
-seed_latent = latents_all[0] 
-seed_difficulty = difficulties_all[0] 
-print(f"✓ Loaded seed context: latent shape={seed_latent.shape}, difficulty={seed_difficulty:.3f}")
 
 
 autoencoder = Autoencoder(

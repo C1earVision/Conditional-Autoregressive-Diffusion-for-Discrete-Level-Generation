@@ -3,7 +3,7 @@ generation:
   guidance_scale: 5.0
   num_levels: 1
   patches_per_level: 1
-  temperature: 0.9
+  temperature: 1.0
   num_prev: 1
 models:
   autoencoder_path: checkpoints/autoencoder.pth
