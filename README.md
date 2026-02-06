@@ -40,7 +40,8 @@ The system uses **Classifier-Free Guidance (CFG)** to enable control over the di
 ├── evaluation/              # Evaluation metrics
 │   ├── difficulty_evaluator.py         # Difficulty scoring
 │   ├── model_performance_evaluator.py  # CFG diagnostic & difficulty comparison
-│   └── difficulty_prediction_comparison.py  # Compare predicted vs actual difficulty
+│   ├── difficulty_prediction_comparison.py  # Compare predicted vs actual difficulty
+│   └── astar_agent.py       # A* pathfinding agent for playability testing
 ├── scripts/                 # Runnable scripts
 │   ├── prepare_data.py      # Data preprocessing
 │   ├── augment_dataset.py   # Dataset augmentation and balancing
@@ -49,7 +50,8 @@ The system uses **Classifier-Free Guidance (CFG)** to enable control over the di
 │   ├── prepare_latents.py   # Encode patches to latents
 │   ├── train_diffusion.py   # Diffusion model training
 │   ├── generate_levels.py   # Level generation
-│   └── evaluate_model_performance.py  # Model evaluation
+│   ├── evaluate_model_performance.py  # Model evaluation
+│   └── compare_with_baseline.py  # Compare with baseline model (MarioGPT)
 ├── checkpoints/             # Saved model weights
 ├── output/                  # Generated outputs
 ├── dataset/                 # Raw level data
@@ -184,10 +186,7 @@ Configuration options in `config/eval_config.yaml`:
 
 ```yaml
 evaluation:
-  difficulties_to_test: [0.0, 0.25, 0.5, 0.75, 1.0]  # For CFG test
-  timesteps_to_test: [499, 400, 300, 200, 100, 50, 0]
-  guidance_scales: [0.0, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0]
-  target_difficulties: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]  # For difficulty eval
+  target_difficulties: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]  
   num_samples_per_target: 5
   guidance_scale: 3.0
 ```
@@ -195,7 +194,32 @@ evaluation:
 Results are saved to:
 - `output/visualizations/difficulty_evaluation.png` — Difficulty comparison plots
 
-### Step 8: Interactive Demo (Desktop App)
+### Step 8: Compare with Baseline Model
+
+Compare the diffusion model against a baseline (MarioGPT):
+
+```bash
+python -m scripts.compare_with_baseline
+```
+
+This evaluates both models on three metrics:
+
+| Metric | Description |
+|--------|-------------|
+| **Controllability** | How well the model follows difficulty targets (MAE, accuracy, correlation) |
+| **Playability** | Percentage of levels completable by an A* agent simulating Mario physics |
+| **Diversity** | Tile distribution entropy (higher = more varied levels) |
+
+The A* agent (`evaluation/astar_agent.py`) simulates:
+- Walking left/right
+- Jumping (up to 4 tiles high, 5 tiles horizontal)
+- Falling with gravity
+- Collision detection with solid tiles and enemies
+
+Results are saved to:
+- `output/visualizations/model_comparison.png` — Side-by-side comparison plots
+
+### Step 9: Interactive Demo (Desktop App)
 
 For an interactive experience, use the desktop GUI application:
 
