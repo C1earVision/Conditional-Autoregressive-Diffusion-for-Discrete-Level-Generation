@@ -226,9 +226,11 @@ For an interactive experience, use the desktop GUI application:
 ```bash
 python demo.py
 ```
-### Other Contributors
-https://github.com/MohamedAly532005
 
 ## License
-
 MIT License
+
+Copyright (c) 2026 Ahmed Ebrahim (C1earVision)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files...
