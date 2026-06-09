@@ -226,7 +226,7 @@ For an interactive experience, use the desktop GUI application:
 ```bash
 python demo.py
 ```
-### Contributors
+### Other Contributors
 https://github.com/MohamedAly532005
 
 ## License
